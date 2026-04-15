@@ -16,6 +16,9 @@ dist-ssr
 .env
 .env.*
 
+# n8n workflow file contains live API keys
+n8n/al-hikmah-rag-workflow.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
