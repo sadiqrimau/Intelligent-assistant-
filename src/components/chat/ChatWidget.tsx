@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Send, GraduationCap, Sparkles } from "lucide-react";
+import { X, Send, GraduationCap, Sparkles, AlertCircle } from "lucide-react";
+
+const N8N_WEBHOOK = import.meta.env.VITE_N8N_WEBHOOK_URL as string;
 
 interface Message {
   id: number;
@@ -23,11 +25,15 @@ const suggestions = [
   "Hostel info",
 ];
 
+// Stable session ID for the browser tab
+const SESSION_ID = `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
 const ChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isTyping, setIsTyping] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -36,29 +42,51 @@ const ChatWidget = () => {
     }
   }, [messages, isTyping, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim() || isTyping) return;
 
-    const userMessage: Message = {
-      id: Date.now(),
-      role: "user",
-      text: message.trim(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    const userText = message.trim();
     setMessage("");
+    setError(null);
+
+    setMessages((prev) => [
+      ...prev,
+      { id: Date.now(), role: "user", text: userText },
+    ]);
     setIsTyping(true);
 
-    setTimeout(() => {
+    try {
+      const res = await fetch(N8N_WEBHOOK, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: SESSION_ID, message: userText }),
+      });
+
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+      const data = await res.json();
+      const aiText =
+        data.response ||
+        "I'm sorry, I couldn't process your question right now. Please try again.";
+
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), role: "ai", text: aiText },
+      ]);
+    } catch {
+      setError("Couldn't reach the assistant. Check your connection and try again.");
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          role: "ai",
+          text: "I'm having trouble connecting right now. Please try again in a moment, or contact the university directly.",
+        },
+      ]);
+    } finally {
       setIsTyping(false);
-      const aiResponse: Message = {
-        id: Date.now() + 1,
-        role: "ai",
-        text: "Thank you for your question. For the most accurate answer, please visit the relevant department page or contact the office directly. Is there anything else I can help you with?",
-      };
-      setMessages((prev) => [...prev, aiResponse]);
-    }, 2200);
+    }
   };
 
   const handleSuggestion = (chip: string) => {
@@ -262,6 +290,17 @@ const ChatWidget = () => {
                   {chip}
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Error banner */}
+          {error && (
+            <div
+              className="mx-4 mb-2 flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+              style={{ background: "rgba(239,68,68,0.12)", color: "rgb(252,165,165)" }}
+            >
+              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+              {error}
             </div>
           )}
 
