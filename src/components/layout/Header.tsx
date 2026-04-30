@@ -9,6 +9,7 @@ const navLinks = [
   { name: "Student Affairs", path: "/student-affairs" },
   { name: "Registry", path: "/registry" },
   { name: "Bursary", path: "/bursary" },
+  { name: "Letter Assistant", path: "/letter-assistant" },
   { name: "About", path: "/about" },
   { name: "Contact", path: "/contact" },
 ];
