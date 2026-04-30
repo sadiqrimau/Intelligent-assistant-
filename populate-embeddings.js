@@ -5,12 +5,38 @@
  *
  * Run ONCE after migrate-to-768.sql:
  *   node populate-embeddings.js
+ *
+ * Reads credentials from .env in the project root.
  */
 
-const SUPABASE_URL      = "https://gwhogvzmkdbfrqljldsf.supabase.co";
-const SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3aG9ndnpta2RiZnJxbGpsZHNmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjIzNDgwMCwiZXhwIjoyMDkxODEwODAwfQ.G2PUlAOYxWKH7MVdIsOPzjFnEJa_d9o1UxaCgN1pUTQ";
-const GEMINI_API_KEY    = "AIzaSyAcg23CSOb_1jBrcc_20HEwZHbsNy5u75g";
-const GEMINI_EMBED_URL  = `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${GEMINI_API_KEY}`;
+const fs = require("fs");
+const path = require("path");
+
+// Read .env manually (no extra dependencies needed)
+function loadEnv() {
+  const envPath = path.join(__dirname, ".env");
+  if (!fs.existsSync(envPath)) throw new Error(".env file not found");
+  const lines = fs.readFileSync(envPath, "utf-8").split("\n");
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const [key, ...rest] = trimmed.split("=");
+    if (key && rest.length) process.env[key.trim()] = rest.join("=").trim();
+  }
+}
+
+loadEnv();
+
+const SUPABASE_URL       = process.env.VITE_SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const GEMINI_API_KEY     = process.env.VITE_GEMINI_API_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !GEMINI_API_KEY) {
+  console.error("Missing required env vars. Check your .env file.");
+  process.exit(1);
+}
+
+const GEMINI_EMBED_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${GEMINI_API_KEY}`;
 
 async function supabaseGet(path) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -61,7 +87,6 @@ async function main() {
   for (const doc of docs) {
     process.stdout.write(`  Embedding: "${doc.title}" ... `);
     try {
-      // Combine title + content for richer embedding
       const text = `${doc.title}\n\n${doc.content}`;
       const embedding = await getEmbedding(text);
 
@@ -75,7 +100,6 @@ async function main() {
       console.log(`FAILED — ${err.message}`);
     }
 
-    // Small delay to avoid rate-limiting
     await new Promise(r => setTimeout(r, 300));
   }
 
