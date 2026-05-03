@@ -49,6 +49,7 @@ function fillTemplate(template: string, data: Record<string, string>): string {
 const LetterAssistant = () => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
   const [step, setStep] = useState<"select" | "fill" | "preview">("select");
   const [selected, setSelected] = useState<Template | null>(null);
   const [formData, setFormData] = useState<Record<string, string>>({});
@@ -64,7 +65,11 @@ const LetterAssistant = () => {
         .eq("is_active", true)
         .order("display_name");
 
-      if (!error && data) setTemplates(data as Template[]);
+      if (error) {
+        setFetchError(error.message);
+      } else {
+        setTemplates(data as Template[]);
+      }
       setLoading(false);
     };
     fetchTemplates();
@@ -181,6 +186,14 @@ const LetterAssistant = () => {
                   {[...Array(4)].map((_, i) => (
                     <div key={i} className="h-32 bg-card rounded-xl border border-border animate-pulse" />
                   ))}
+                </div>
+              ) : fetchError ? (
+                <div className="bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-xl px-5 py-4">
+                  Could not load letter templates: {fetchError}. Please check your Supabase RLS policies.
+                </div>
+              ) : templates.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground text-sm">
+                  No letter templates found. Please run the schema SQL in Supabase to seed the templates.
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
