@@ -3,7 +3,7 @@ import Layout from "@/components/layout/Layout";
 import { supabase } from "@/lib/supabase";
 import {
   FileText, ChevronRight, ChevronLeft, Copy, Check,
-  GraduationCap, BookOpen, Award, ClipboardList
+  GraduationCap, BookOpen, Award, ClipboardList, PlusCircle, PenLine
 } from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -31,6 +31,8 @@ const ICONS: Record<string, React.ReactNode> = {
   transcript_request: <BookOpen className="w-6 h-6" />,
   attestation: <ClipboardList className="w-6 h-6" />,
   good_standing: <Award className="w-6 h-6" />,
+  extra_credit_request: <PlusCircle className="w-6 h-6" />,
+  supplementary_exam_request: <PenLine className="w-6 h-6" />,
 };
 
 const DESCRIPTIONS: Record<string, string> = {
@@ -38,6 +40,8 @@ const DESCRIPTIONS: Record<string, string> = {
   transcript_request: "Request official academic transcript copies.",
   attestation: "Obtain a letter confirming your studentship.",
   good_standing: "Get confirmation of your good academic standing.",
+  extra_credit_request: "Request approval for an additional credit unit.",
+  supplementary_exam_request: "Request approval to write a supplementary exam.",
 };
 
 function fillTemplate(template: string, data: Record<string, string>): string {
