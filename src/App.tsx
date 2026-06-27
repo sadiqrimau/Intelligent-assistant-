@@ -3,7 +3,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/context/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
+import Login from "./pages/Login";
 import StudentPortal from "./pages/StudentPortal";
 import StudentAffairs from "./pages/StudentAffairs";
 import Registry from "./pages/Registry";
@@ -21,21 +24,28 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/programs" element={<AcademicPrograms />} />
-          <Route path="/portal" element={<StudentPortal />} />
-          <Route path="/student-affairs" element={<StudentAffairs />} />
-          <Route path="/registry" element={<Registry />} />
-          <Route path="/bursary" element={<Bursary />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/letter-assistant" element={<LetterAssistant />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Index />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/login" element={<Login />} />
+
+            {/* Protected routes — require student login */}
+            <Route path="/programs" element={<ProtectedRoute><AcademicPrograms /></ProtectedRoute>} />
+            <Route path="/portal" element={<ProtectedRoute><StudentPortal /></ProtectedRoute>} />
+            <Route path="/student-affairs" element={<ProtectedRoute><StudentAffairs /></ProtectedRoute>} />
+            <Route path="/registry" element={<ProtectedRoute><Registry /></ProtectedRoute>} />
+            <Route path="/bursary" element={<ProtectedRoute><Bursary /></ProtectedRoute>} />
+            <Route path="/about" element={<ProtectedRoute><About /></ProtectedRoute>} />
+            <Route path="/letter-assistant" element={<ProtectedRoute><LetterAssistant /></ProtectedRoute>} />
+
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
